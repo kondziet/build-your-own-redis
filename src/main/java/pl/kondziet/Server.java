@@ -50,11 +50,13 @@ public class Server {
                             buffer.flip();
                             var data = new String(buffer.array(), buffer.position(), bytesRead);
                             System.out.println(data);
-                            ParseResult parseResult = dataTypeParser.parse(data);
-                            switch (parseResult) {
-                                case ParseResult.Complete result -> System.out.println(result);
-                                case ParseResult.Incomplete ignored ->
+                            Outcome<DataType> outcome = dataTypeParser.parse(data);
+                            switch (outcome) {
+                                case Outcome.Success<DataType> result -> System.out.println(result);
+                                case Outcome.Failure<DataType> ignored ->
                                         System.out.println("Command incomplete... listening for subsequent write event");
+                                case Outcome.Incomplete<DataType> ignored -> {
+                                }
                             }
                             // check whether requested command can be handled right away, or need to wait for remaining part to come
                             // if so, create some sort of session, attach it during register of upcoming OP_READ event.
