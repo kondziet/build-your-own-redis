@@ -50,10 +50,10 @@ public class Server {
                             buffer.flip();
                             var data = new String(buffer.array(), buffer.position(), bytesRead);
                             System.out.println(data);
-                            ParseResult parseResult = dataTypeParser.parse(data);
-                            switch (parseResult) {
-                                case ParseResult.Complete result -> System.out.println(result);
-                                case ParseResult.Incomplete ignored ->
+                            DataTypeParseResult dataTypeParseResult = dataTypeParser.parse(data);
+                            switch (dataTypeParseResult) {
+                                case DataTypeParseResult.Complete result -> System.out.println(result);
+                                case DataTypeParseResult.Incomplete ignored ->
                                         System.out.println("Command incomplete... listening for subsequent write event");
                             }
                             // check whether requested command can be handled right away, or need to wait for remaining part to come

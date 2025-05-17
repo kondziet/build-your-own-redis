@@ -1,6 +1,6 @@
 package pl.kondziet;
 
-import pl.kondziet.ParseResult.Complete;
+import pl.kondziet.DataTypeParseResult.Complete;
 
 import java.util.ArrayList;
 
@@ -11,7 +11,7 @@ public class DataTypeParser {
     private int position;
     private String source;
 
-    public ParseResult parse(String source) {
+    public DataTypeParseResult parse(String source) {
         position = 0;
         this.source = source;
 
