@@ -13,6 +13,7 @@ import java.util.Set;
 public class Server {
 
     private final Set<SocketChannel> clients = new HashSet<>();
+    private final DataTypeParser dataTypeParser = new DataTypeParser();
 
     public void start(int port) {
         try (var server = ServerSocketChannel.open();
@@ -44,10 +45,17 @@ public class Server {
                                 System.out.println("DISCONNECTED: " + clientInfo);
                                 channel.close();
                                 clients.remove(channel);
+                                continue;
                             }
                             buffer.flip();
                             var data = new String(buffer.array(), buffer.position(), bytesRead);
                             System.out.println(data);
+                            ParseResult parseResult = dataTypeParser.parse(data);
+                            switch (parseResult) {
+                                case ParseResult.Complete result -> System.out.println(result);
+                                case ParseResult.Incomplete ignored ->
+                                        System.out.println("Command incomplete... listening for subsequent write event");
+                            }
                             // check whether requested command can be handled right away, or need to wait for remaining part to come
                             // if so, create some sort of session, attach it during register of upcoming OP_READ event.
                             // if write couldn't been completed at once perform accordingly like above. Current solution
