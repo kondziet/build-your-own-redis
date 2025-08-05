@@ -6,4 +6,5 @@ public class Protocol {
 
     public static final char ARRAY = '*';
     public static final char BULK_STRING = '$';
+    public static final char SIMPLE_ERROR = '-';
 }

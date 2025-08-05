@@ -13,7 +13,7 @@ import java.util.Set;
 public class Server {
 
     private final Set<SocketChannel> clients = new HashSet<>();
-    private final DataTypeParser dataTypeParser = new DataTypeParser();
+    private final RespParser respParser = new RespParser();
 
     public void start(int port) {
         try (var server = ServerSocketChannel.open();
@@ -50,10 +50,10 @@ public class Server {
                             buffer.flip();
                             var data = new String(buffer.array(), buffer.position(), bytesRead);
                             System.out.println(data);
-                            DataTypeParseResult dataTypeParseResult = dataTypeParser.parse(data);
-                            switch (dataTypeParseResult) {
-                                case DataTypeParseResult.Complete result -> System.out.println(result);
-                                case DataTypeParseResult.Incomplete ignored ->
+                            ParseResult parseResult = respParser.parse(data);
+                            switch (parseResult) {
+                                case ParseResult.Complete result -> System.out.println(result);
+                                case ParseResult.Incomplete ignored ->
                                         System.out.println("Command incomplete... listening for subsequent write event");
                             }
                             // check whether requested command can be handled right away, or need to wait for remaining part to come
