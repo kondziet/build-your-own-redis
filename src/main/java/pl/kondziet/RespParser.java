@@ -1,7 +1,7 @@
 package pl.kondziet;
 
-import pl.kondziet.ParseResult.Complete;
-import pl.kondziet.ParseResult.Incomplete;
+import org.jspecify.annotations.Nullable;
+import pl.kondziet.ParseResult.*;
 
 import java.util.ArrayList;
 
@@ -9,64 +9,107 @@ import static pl.kondziet.Protocol.*;
 
 public class RespParser {
 
-    private int position;
+    @Nullable
     private String source;
-    private ParseResult result;
+    private int position;
+    @Nullable
+    private ParseResult failure;
 
     public ParseResult parse(String source) {
-        position = 0;
         this.source = source;
+        position = 0;
+        failure = null;
 
-        RespType element = parseDataType();
-        return new Complete(element);
+        RespType element = parseElement();
+        return failure != null ? failure : new Complete(element);
     }
 
-    private RespType parseDataType() {
+    @Nullable
+    private RespType parseElement() {
+        if (position >= source.length()) {
+            setIncomplete();
+            return null;
+        }
         char typeIndicator = source.charAt(position);
 
         return switch (typeIndicator) {
             case ARRAY -> parseArray();
             case BULK_STRING -> parseBulkString();
-            default -> null; // throw error("unknown data type '%s' at position %d".formatted(type, position));
+            default -> {
+                setError("unknown data type '%s' at position %d".formatted(typeIndicator, position));
+                yield null;
+            }
         };
     }
 
+    @Nullable
     private Array parseArray() {
         position++;
 
-        int numberOfElements = consumeInt();
+        Integer numberOfElements = consumeInt();
+        if (numberOfElements == null) {
+            return null;
+        }
+
         ArrayList<RespType> elements = new ArrayList<>(numberOfElements);
         for (int i = 0; i < numberOfElements; i++) {
-            elements.add(parseDataType());
+            RespType element = parseElement();
+            if (element == null) {
+                return null;
+            }
+            elements.add(element);
         }
 
         return new Array(elements);
     }
 
+    @Nullable
     private BulkString parseBulkString() {
         position++;
 
-        int lengthOfString = consumeInt();
-        String content = source.substring(position, source.indexOf(CRLF, position));
+        Integer lengthOfString = consumeInt();
+        if (lengthOfString == null) {
+            return null;
+        }
+
+        int endIndex = source.indexOf(CRLF, position);
+        if (endIndex == -1 || endIndex < position + lengthOfString) {
+            setIncomplete();
+            return null;
+        }
+
+        String content = source.substring(position, position + lengthOfString);
         position += lengthOfString + CRLF.length();
 
         return new BulkString(content);
     }
 
-    private int consumeInt() {
+    @Nullable
+    private Integer consumeInt() {
         int crlfIndex = source.indexOf(CRLF, position);
+        if (crlfIndex == -1) {
+            setIncomplete();
+            return null;
+        }
+
         String numberLiteral = source.substring(position, crlfIndex);
-        int value = Integer.parseInt(numberLiteral);
+        int value;
+        try {
+            value = Integer.parseInt(numberLiteral);
+        } catch (NumberFormatException e) {
+            setError("invalid integer '%s' at position %d".formatted(numberLiteral, position));
+            return null;
+        }
 
         position += numberLiteral.length() + CRLF.length();
         return value;
     }
 
     private void setIncomplete() {
-        result = new Incomplete();
+        failure = new Incomplete();
     }
 
     private void setError(String message) {
-        result = new Complete(new SimpleError(message));
+        failure = new Complete(new SimpleError(message));
     }
 }
