@@ -1,6 +1,5 @@
 package pl.kondziet;
 
-import org.jspecify.annotations.Nullable;
 import pl.kondziet.ParseResult.*;
 
 import java.util.ArrayList;
@@ -9,10 +8,8 @@ import static pl.kondziet.Protocol.*;
 
 public class RespParser {
 
-    @Nullable
     private String source;
     private int position;
-    @Nullable
     private ParseResult failure;
 
     public ParseResult parse(String source) {
@@ -24,7 +21,6 @@ public class RespParser {
         return failure != null ? failure : new Complete(element);
     }
 
-    @Nullable
     private RespType parseElement() {
         if (position >= source.length()) {
             setIncomplete();
@@ -42,7 +38,6 @@ public class RespParser {
         };
     }
 
-    @Nullable
     private Array parseArray() {
         position++;
 
@@ -63,7 +58,6 @@ public class RespParser {
         return new Array(elements);
     }
 
-    @Nullable
     private BulkString parseBulkString() {
         position++;
 
@@ -84,7 +78,6 @@ public class RespParser {
         return new BulkString(content);
     }
 
-    @Nullable
     private Integer consumeInt() {
         int crlfIndex = source.indexOf(CRLF, position);
         if (crlfIndex == -1) {
